@@ -8,7 +8,7 @@
 }
 
 .free {
-  background-color: rgb(179, 113, 113);
+  background-color: rgb(93, 185, 0);
   overflow-wrap: break-word;
   display: inline-block;
   margin: 2px 2px 30px 2px;
@@ -17,7 +17,16 @@
 }
 
 .occupied {
-  background-color: rgb(93, 185, 0);
+  background-color: rgb(179, 113, 113);
+  overflow-wrap: break-word;
+  display: inline-block;
+  margin: 2px 2px 30px 2px;
+  width: 30px;
+  height: 30px;
+}
+
+.reserved {
+  background-color: rgb(253, 255, 121);
   overflow-wrap: break-word;
   display: inline-block;
   margin: 2px 2px 30px 2px;

@@ -1,10 +1,11 @@
 import React from "react";
 import Button from "antd/es/button";
-import { Row, Col, Menu, Dropdown, Icon } from "antd";
+import { Row, Col, message } from "antd";
 
 import Firebase from "firebase";
 import config from "../../components/config";
 import moment from "moment";
+
 import "./index.css";
 
 moment.locale("pt-BR");
@@ -16,7 +17,11 @@ class Start extends React.Component {
 
     this.state = {
       map: [],
-      disabled: false
+      map2: [],
+      disabled: false,
+      called: false,
+      menu: [],
+      loading: false
     };
 
     this.handleClick = this.handleClick.bind(this);
@@ -32,47 +37,85 @@ class Start extends React.Component {
       .set(aux);
   };
 
-  getParkData = () => {
-    let ref = Firebase.database().ref("/");
-    ref.on("value", snapshot => {
-      const state = snapshot.val();
-      this.setState({ map: state });
-    });
-    console.log("DATA RETRIEVED");
-  };
-
   componentDidMount() {
+    this.setState({ loading: true });
+
     const aux = [];
     for (let j = 0; j < 56; j++) {
       aux.push(
         Math.floor(Math.random() * 7 + 1) === 1 ? (
-          <div tag="ocupada" className="first">
+          <div tag="livre" className="first">
             {" "}
             {j + 1}{" "}
           </div>
         ) : (
-          <div tag="livre" className="first">
+          <div tag="ocupada" className="first">
             {" "}
             {j + 1}{" "}
           </div>
         )
       );
     }
+
+    Firebase.database()
+      .ref("/parks/")
+      .on("value", snapshot => {
+        const messageObject = snapshot.val();
+        if (messageObject) {
+          const messageList = Object.keys(messageObject).map(key => ({
+            ...messageObject[key],
+            uid: key
+          }));
+          this.setState({
+            menu: messageList,
+            loading: false
+          });
+        } else {
+          this.setState({ menu: null, loading: false });
+        }
+      });
+
     this.setState({
       map: aux
     });
   }
+
+  showAlert = e => {
+    if (this.state.called === false) {
+      message.success(`A vaga ${e.target.id} foi reservada com sucesso!`);
+
+      const aux = this.state.map;
+
+      aux[e.target.id - 1] = (
+        <div tag="reservada" className="reserved">
+          {" "}
+          {e.target.id}{" "}
+        </div>
+      );
+
+      this.setState({
+        map: aux,
+        called: true
+      });
+
+      this.writeParkData();
+    } else {
+      message.warning("Você já reservou uma vaga!");
+    }
+  };
 
   handleClick() {
     const change = [];
     for (let i = 0; i < 56; i++) {
       change.push(
         this.state.map[i].props.tag === "ocupada" ? (
-          <div className="occupied" onClick={this.showModal}>
+          <div className="occupied" tag="ocupada" id={i + 1}>
             {i + 1}
           </div>
         ) : (
-          <div className="free">{i + 1}</div>
+          <div className="free" id={i + 1} tag="livre" onClick={this.showAlert}>
+            {i + 1}
+          </div>
         )
       );
     }
@@ -80,31 +123,11 @@ class Start extends React.Component {
       map: change,
       disabled: true
     });
-
-    this.writeParkData();
   }
 
   render() {
-    const menu = (
-      <Menu>
-        <Menu.Item key="0">
-          <a href="http://www.alipay.com/">1st menu item</a>
-        </Menu.Item>
-        <Menu.Item key="1">
-          <a href="http://www.taobao.com/">2nd menu item</a>
-        </Menu.Item>
-        <Menu.Divider />
-        <Menu.Item key="3">3rd menu item</Menu.Item>
-      </Menu>
-    );
-
     return (
       <div>
-        <Dropdown overlay={menu} trigger={["click"]}>
-          <Button href="#">
-            Selecionar dia <Icon type="down" />
-          </Button>
-        </Dropdown>
         <Button onClick={this.handleClick} disabled={this.state.disabled}>
           Procurar Vaga
         </Button>
